@@ -4,7 +4,7 @@ import { View, Text } from "react-native";
 import Geolocation from "@react-native-community/geolocation";
 import Geocoder from "react-native-geocoding";
 
-//Geocoder.init("xxxxxxxxxxxxxxxxxxxxxxxxx"); 
+Geocoder.init("AIzaSyAnYsY86_y6XONni38aVCoKty8ehA7icF4"); 
 
 class CurrentPosition extends Component {
   constructor(props) {
@@ -25,7 +25,7 @@ class CurrentPosition extends Component {
           longitude: position.coords.longitude
         });
         
-        /*Geocoder.from(position.coords.latitude, position.coords.longitude).then(json => {
+        Geocoder.from(position.coords.latitude, position.coords.longitude).then(json => {
           console.log(json);
 
           var addressComponent = json.results[0].address_components;
@@ -35,7 +35,7 @@ class CurrentPosition extends Component {
           });
 
           console.log(addressComponent);
-        })*/
+        })
       }
     }, (error) => {
       this.setState({ error: error.message }),

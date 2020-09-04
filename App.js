@@ -1,21 +1,29 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import { NavigationContainer } from '@react-navigation/native';
+import MyTabs from './components/Navigation';
+
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+    <MyTabs />
+  </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#eef",
+    flexDirection: "column"
   },
+  childContainer: {
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  header: {
+    backgroundColor: "cyan",
+    width: "100%"
+  }
 });

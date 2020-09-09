@@ -7,6 +7,9 @@ import AsyncStorage from '@react-native-community/async-storage';
 
 Geocoder.init("AIzaSyAnYsY86_y6XONni38aVCoKty8ehA7icF4");
 
+function formatDate(date) {
+  return date.getDate() + "-" + (date.getMonth() + 1) + "-" + date.getFullYear() + " " + addZero(date.getHours()) + ":" + addZero(date.getUTCMinutes());
+}
 function addZero(i) {
   if (i < 10) {
     i = "0" + i;
@@ -23,7 +26,6 @@ class CurrentPosition extends Component {
       error: null,
       address: null,
       forecast: null,
-      state: []
     };;
   }
 
@@ -31,15 +33,15 @@ class CurrentPosition extends Component {
   componentDidMount() {
     Geolocation.getCurrentPosition(async (position) => {
       {
-        let date = new Date();
-        let dateStr = date.getDate()+ "-" + (date.getMonth() + 1) + "-" + date.getFullYear() + " " +  addZero(date.getHours()) + ":" +addZero(date.getUTCMinutes());
+        let url =
+          `https://api.openweathermap.org/data/2.5/weather?lat=${position.coords.latitude}&lon=${position.coords.longitude}&appid=4bb26d063345b0b5f4a3ae9fa9e5c78c&units=metric&lang=ru`;
 
         var dataStore = {
-          date: dateStr,
+          date: formatDate(new Date()),
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          city:"", 
-          weather:""
+          city: "",
+          weather: ""
         }
 
         this.setState({
@@ -47,38 +49,40 @@ class CurrentPosition extends Component {
           longitude: position.coords.longitude
         });
 
-        Geocoder.from(position.coords.latitude, position.coords.longitude).then(json => {
-          console.log(json);
-          let city = json.plus_code.compound_code.split(" ").splice(1);
-          dataStore.city = city.join(" ");
-          console.log(dataStore.city);
-          this.setState({
-            address: json.results[0].formatted_address
-          });
-        })
-
-        let url = 'https://api.openweathermap.org/data/2.5/weather?lat=' + position.coords.latitude + '&lon=' + position.coords.longitude + '&appid=4bb26d063345b0b5f4a3ae9fa9e5c78c' + '&units=metric&lang=ru';
-        fetch(url)
-          .then(response => {
+        let result = await Promise.all([
+          Geocoder.from(position.coords.latitude, position.coords.longitude),
+          fetch(url).then(response => {
             return response.json()
           })
-          .then(data => {
-            console.log(data);
-            let weather = data.weather[0].description[0].toUpperCase() + data.weather[0].description.substring(1) + ". Температура воздуха: " + data.main.temp + " C.";
-            dataStore["weather"] = weather;
-            this.setState(
-              {
-                forecast: weather
-              });
-          })
+        ]);
+
+        let json = result[0];
+        let data = result[1];
+
+        let weather = data.weather[0]?.description[0]?.toUpperCase() + data.weather[0]?.description?.substring(1) + ". Температура воздуха: " + data.main?.temp + " C.";
+        this.setState(
+          {
+            address: json.results[0]?.formatted_address,
+            forecast: weather
+          });
+
+        let city = json.plus_code?.compound_code?.split(" ").splice(1);
+        dataStore.city = city.join(" ");
+        dataStore["weather"] = weather;
 
         try {
-          const jsonValue = await AsyncStorage.getItem('@storage_Key')
-          let store = jsonValue != null ? JSON.parse(jsonValue) : null;
-          console.log(store);
-          await AsyncStorage.setItem('@storage_Key', JSON.stringify(dataStore));
+          const jsonValue = await AsyncStorage.getItem('@storage_Key');
+          let store = !!jsonValue ? JSON.parse(jsonValue) : jsonValue;
+          let newStore;
+          if (!Array.isArray(store))
+            newStore = [dataStore];
+          else {
+            store.unshift(dataStore);
+            newStore = store;
+          }
+          await AsyncStorage.setItem('@storage_Key', JSON.stringify(newStore));
         } catch (e) {
-          console.log(e.code, e.message);
+          console.log(e);
         }
       }
     }, (error) => {
